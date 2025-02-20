@@ -1,0 +1,165 @@
+{
+    "zabbix_export": {
+        "version": "6.0",
+        "date": "2025-02-20T07:47:17Z",
+        "groups": [
+            {
+                "uuid": "196b11741b1843c891bca740de88b482",
+                "name": "Templates"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "8c1f09a6a0b04ef5b55e96f6efa995b4",
+                "template": "ofd.ru monitoring",
+                "name": "ofd.ru monitoring",
+                "groups": [
+                    {
+                        "name": "Templates"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "0f607ce980b7434f9725e3b95ff23080",
+                        "name": "KKM Error",
+                        "type": "DEPENDENT",
+                        "key": "kkm.error",
+                        "delay": "0",
+                        "trends": "0",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JAVASCRIPT",
+                                "parameters": [
+                                    "var result = '';\nvar JSONobj = JSON.parse(value);\nvar responseStatus = JSONobj.Status;\nif (responseStatus == \"Success\")\n{\n  var count = JSONobj.Data.length;\n  if (count > 0)\n  {\n    for (var i = 0; i < count; i++)\n    {   \n        result += \"\u041a\u0430\u0441\u0441\u0430 \" + (i+1) + '\\n';\n        result += \"\u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u043e\u043d\u043d\u044b\u0439 \u043d\u043e\u043c\u0435\u0440: \" + JSONobj.Data[i].RegNumber + '\\n';\n        result += \"\u0417\u0430\u0432\u043e\u0434\u0441\u043a\u043e\u0439 \u043d\u043e\u043c\u0435\u0440: \" + JSONobj.Data[i].ZnNumber + '\\n';\n        result += \"\u0410\u0434\u0440\u0435\u0441: \" + JSONobj.Data[i].Address + '\\n';\n        result += \"\u0414\u0430\u0442\u0430 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0435\u0433\u043e \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430: \" + JSONobj.Data[i].LastReceiptDate + '\\n';\n        result += \"\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u044f\u044f \u0441\u043c\u0435\u043d\u0430 (\u043e\u0442\u043a\u0440\u044b\u0442\u0430/\u0437\u0430\u043a\u0440\u044b\u0442\u0430): \" + JSONobj.Data[i].LastShiftOpenDate + \" - \" + JSONobj.Data[i].LastShiftCloseDate + '\\n';\n        result += \"\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u044f\u044f \u043e\u0448\u0438\u0431\u043a\u0430: \" + JSONobj.Data[i].LastError.Code + ' - ' + JSONobj.Data[i].LastError.Description + '\\n\\n';\n    }\n  }\n  else\n  {\n    result = \"\u041d\u0435\u0442 \u043a\u0430\u0441\u0441 \u0441 \u043e\u0448\u0438\u0431\u043a\u0430\u043c\u0438\";\n  }\n}\nelse if (responseStatus == \"Failed\")\n{\n  for (var i = 0; i < JSONobj.Errors.length; i++)\n    result += JSONobj.Errors[i];\n}\nelse\n  result = value;\n\nreturn result;"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "kkm.error.json"
+                        },
+                        "triggers": [
+                            {
+                                "uuid": "c77671a589754543a2089a43ee8459db",
+                                "expression": "find(/ofd.ru monitoring/kkm.error,,\"like\",\"\u041d\u0435\u0442 \u043a\u0430\u0441\u0441 \u0441 \u043e\u0448\u0438\u0431\u043a\u0430\u043c\u0438\")=0",
+                                "name": "KKM Error",
+                                "status": "DISABLED",
+                                "priority": "HIGH",
+                                "description": "\u041e\u0431\u043d\u0430\u0440\u0443\u0436\u0435\u043d\u044b \u041a\u041a\u041c \u0441 \u043e\u0448\u0438\u0431\u043a\u0430\u043c\u0438 (\u0412\u0440\u0435\u043c\u0435\u043d\u043d\u043e\u0435 \u0440\u0435\u0448\u0435\u043d\u0438\u0435)",
+                                "manual_close": "YES"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "789741d3709947548c8e6622f8936576",
+                        "name": "KKM Error data",
+                        "type": "SCRIPT",
+                        "key": "kkm.error.json",
+                        "delay": "0;{$PERIOD}/1-7,8:00-23:59",
+                        "history": "10d",
+                        "trends": "0",
+                        "value_type": "TEXT",
+                        "params": "function formatDate(date) {\n\n  var dd = date.getDate();\n  if (dd < 10) dd = '0' + dd;\n\n  var mm = date.getMonth() + 1;\n  if (mm < 10) mm = '0' + mm;\n\n  var yyyy = date.getFullYear();\n\n  return yyyy + '-' + mm + '-' + dd;\n}\nvar d = new Date();\nvar datefrom = formatDate(d)+\"T00:00:00\";\nvar dateto = formatDate(d)+\"T23:59:59\";\n\nvar url = \"https://ofd.ru/api/integration/v2/kkts/errors?\";\n\nvar obj = JSON.parse(value);\nvar token = obj.token;\n\nvar request = new HttpRequest();\nreturn response = request.get(url + \"DateFrom=\" + datefrom + \"&DateTo=\" + dateto + \"&AuthToken=\" + token);",
+                        "description": "JSON \u043f\u043e \u043e\u0448\u0438\u0431\u043e\u0447\u043d\u044b\u043c \u043a\u0430\u0441\u0441\u0430\u043c",
+                        "timeout": "10s",
+                        "parameters": [
+                            {
+                                "name": "token",
+                                "value": "{$TOKEN}"
+                            }
+                        ]
+                    }
+                ],
+                "discovery_rules": [
+                    {
+                        "uuid": "5fcb7511d69b4941899b279d843e829d",
+                        "name": "kkm error discovery",
+                        "type": "DEPENDENT",
+                        "key": "kkm.error.discovery",
+                        "delay": "0",
+                        "lifetime": "1d",
+                        "description": "\u041e\u0431\u043d\u0430\u0440\u0443\u0436\u0435\u043d\u0438\u0435 \u043a\u0430\u0441\u0441 \u0441 \u043e\u0448\u0438\u0431\u043a\u0430\u043c\u0438",
+                        "item_prototypes": [
+                            {
+                                "uuid": "446c1b3f623d4a308fbfba86842c6ea9",
+                                "name": "KKM: {#REGNUM}",
+                                "type": "DEPENDENT",
+                                "key": "kkm.[{#REGNUM}]",
+                                "delay": "0",
+                                "trends": "0",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.Data.[?(@.RegNumber=='{#REGNUM}')].['RegNumber', 'ZnNumber', 'Address', 'LastError']"
+                                        ],
+                                        "error_handler": "CUSTOM_VALUE",
+                                        "error_handler_params": "[]"
+                                    },
+                                    {
+                                        "type": "JAVASCRIPT",
+                                        "parameters": [
+                                            "var JSONobj = JSON.parse(value);\n\nif (JSONobj.length != 0)\n{\n\tvar RegNumber = JSONobj[0];\n\tvar ZnNumber = JSONobj[1];\n\tvar Address = JSONobj[2];\n\tvar LastErrorCode = JSONobj[3].Code;\n\tvar LastErrorDescription = JSONobj[3].Description;\n\tvar result = '\u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u043e\u043d\u043d\u044b\u0439 \u043d\u043e\u043c\u0435\u0440: '+RegNumber+'\\n'+'\u0417\u0430\u0432\u043e\u0434\u0441\u043a\u043e\u0439 \u043d\u043e\u043c\u0435\u0440: '+ZnNumber+'\\n'+'\u0410\u0434\u0440\u0435\u0441: '+Address+'\\n'+'\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u044f\u044f \u043e\u0448\u0438\u0431\u043a\u0430: '+'('+LastErrorCode+') '+LastErrorDescription;\n}\nelse result = 'empty';\nreturn result;"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED",
+                                        "parameters": [
+                                            ""
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "kkm.error.json"
+                                },
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "5712383278e6413ebce3636f9840a4f3",
+                                        "expression": "find(/ofd.ru monitoring/kkm.[{#REGNUM}],,\"like\",\"empty\")=0",
+                                        "recovery_mode": "RECOVERY_EXPRESSION",
+                                        "recovery_expression": "find(/ofd.ru monitoring/kkm.[{#REGNUM}],,\"like\",\"empty\")=1",
+                                        "name": "Error KKM {#REGNUM}",
+                                        "priority": "HIGH",
+                                        "manual_close": "YES"
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "kkm.error.json"
+                        },
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.Data[*]"
+                                ],
+                                "error_handler": "CUSTOM_VALUE",
+                                "error_handler_params": "[]"
+                            },
+                            {
+                                "type": "STR_REPLACE",
+                                "parameters": [
+                                    "RegNumber",
+                                    "{#REGNUM}"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "macros": [
+                    {
+                        "macro": "{$PERIOD}",
+                        "value": "60"
+                    },
+                    {
+                        "macro": "{$TOKEN}",
+                        "type": "SECRET_TEXT",
+                        "description": "\u0422\u043e\u043a\u0435\u043d \u042e\u041b \u0434\u043b\u044f API"
+                    }
+                ]
+            }
+        ]
+    }
+}
